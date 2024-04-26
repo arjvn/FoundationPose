@@ -152,6 +152,242 @@ class YcbineoatReader:
     return mesh
 
 
+class RealsenseReader:
+  def __init__(self,video_dir, downscale=1, shorter_side=None, zfar=np.inf):
+    self.video_dir = video_dir
+    self.downscale = downscale
+    self.zfar = zfar
+    # self.color_files = sorted(glob.glob(f"{self.video_dir}/color/*.jpg"))
+    video_path = '/home/deeplearner/Documents/haozheng_hdd/FoundationPose/demo_data/avocado_video/realsense_captured_datasets 2 (1)/realsense_captured_datasets/avocado_experiment_mini'
+    self.color_files = sorted(glob.glob(f"{video_path}/color_images/*.png"))
+
+    # video_path = '/home/deeplearner/Documents/haozheng_hdd/ObjectDatasetTools/LINEMOD/avocado_1/'
+    # self.color_files  = sorted(glob.glob(f"{video_path}/JPEGImages/*.jpg"))
+
+    with open(f"{self.video_dir}/color_intrinsics.json") as f:
+    # with open(f"{self.video_dir}/intrinsics.json") as f:
+      cam_params = json.load(f)
+    # print(cam_params)
+    cx = cam_params['ppx']
+    cy = cam_params['ppy']
+    fx = cam_params['fx']
+    fy = cam_params['fy']
+
+    self.K = np.array([fx,0,cx,0,fy,cy,0,0,1]).reshape((3,3))
+
+    # self.K = np.loadtxt(f'{video_dir}/cam_K.txt').reshape(3,3)
+    self.id_strs = []
+    for color_file in self.color_files:
+      id_str = os.path.basename(color_file).replace('.jpg','')
+      self.id_strs.append(id_str)
+    self.H,self.W = cv2.imread(self.color_files[0]).shape[:2]
+
+    if shorter_side is not None:
+      self.downscale = shorter_side/min(self.H, self.W)
+
+    self.H = int(self.H*self.downscale)
+    self.W = int(self.W*self.downscale)
+    self.K[:2] *= self.downscale
+
+    self.gt_pose_files = sorted(glob.glob(f'{self.video_dir}/annotated_poses/*'))
+
+    self.videoname_to_object = {
+      'bleach0': "021_bleach_cleanser",
+      'bleach_hard_00_03_chaitanya': "021_bleach_cleanser",
+      'cracker_box_reorient': '003_cracker_box',
+      'cracker_box_yalehand0': '003_cracker_box',
+      'mustard0': '006_mustard_bottle',
+      'mustard_easy_00_02': '006_mustard_bottle',
+      'sugar_box1': '004_sugar_box',
+      'sugar_box_yalehand0': '004_sugar_box',
+      'tomato_soup_can_yalehand0': '005_tomato_soup_can',
+    }
+
+
+  def get_video_name(self):
+    return self.video_dir.split('/')[-1]
+
+  def __len__(self):
+    return len(self.color_files)
+
+  def get_gt_pose(self,i):
+    try:
+      pose = np.loadtxt(self.gt_pose_files[i]).reshape(4,4)
+      return pose
+    except:
+      logging.info("GT pose not found, return None")
+      return None
+
+
+  def get_color(self,i):
+    color = imageio.imread(self.color_files[i])[...,:3]
+    color = cv2.resize(color, (self.W,self.H), interpolation=cv2.INTER_NEAREST)
+    return color
+
+  def get_mask(self,i):
+    mask = cv2.imread(self.color_files[i].replace('rgb','masks'),-1)
+    if len(mask.shape)==3:
+      for c in range(3):
+        if mask[...,c].sum()>0:
+          mask = mask[...,c]
+          break
+    mask = cv2.resize(mask, (self.W,self.H), interpolation=cv2.INTER_NEAREST).astype(bool).astype(np.uint8)
+    return mask
+
+  def get_depth(self,i):
+    # depth = cv2.imread(self.color_files[i].replace('rgb','depth'),-1)/1e3
+    depth = cv2.imread(self.color_files[i].replace('color_images/color','depth_images/depth'),-1)/1e3
+    # depth_path = self.color_files[i].replace('JPEGImages','depth')
+    # depth_path = depth_path.replace('.jpg','.png')
+    # depth = cv2.imread(depth_path)
+    print('orig depth',depth.shape)
+    depth = cv2.resize(depth, (self.W,self.H), interpolation=cv2.INTER_NEAREST)
+    depth[(depth<0.1) | (depth>=self.zfar)] = 0
+    return depth
+
+
+  def get_xyz_map(self,i):
+    depth = self.get_depth(i)
+    xyz_map = depth2xyzmap(depth, self.K)
+    return xyz_map
+
+  def get_occ_mask(self,i):
+    hand_mask_file = self.color_files[i].replace('rgb','masks_hand')
+    occ_mask = np.zeros((self.H,self.W), dtype=bool)
+    if os.path.exists(hand_mask_file):
+      occ_mask = occ_mask | (cv2.imread(hand_mask_file,-1)>0)
+
+    right_hand_mask_file = self.color_files[i].replace('rgb','masks_hand_right')
+    if os.path.exists(right_hand_mask_file):
+      occ_mask = occ_mask | (cv2.imread(right_hand_mask_file,-1)>0)
+
+    occ_mask = cv2.resize(occ_mask, (self.W,self.H), interpolation=cv2.INTER_NEAREST)
+
+    return occ_mask.astype(np.uint8)
+
+  def get_gt_mesh(self):
+    ob_name = self.videoname_to_object[self.get_video_name()]
+    YCB_VIDEO_DIR = os.getenv('YCB_VIDEO_DIR')
+    mesh = trimesh.load(f'{YCB_VIDEO_DIR}/models/{ob_name}/textured_simple.obj')
+    return mesh
+
+
+class Realsense2Reader:
+  def __init__(self,video_dir, downscale=1, shorter_side=None, zfar=np.inf):
+    self.video_dir = video_dir
+    self.downscale = downscale
+    self.zfar = zfar
+    # self.color_files = sorted(glob.glob(f"{self.video_dir}/color/*.jpg"))
+
+    # video_path = '/home/deeplearner/Documents/haozheng_hdd/ObjectDatasetTools/LINEMOD/avocado_1/'
+    video_path = video_dir
+    self.color_files  = sorted(glob.glob(f"{video_path}/JPEGImages/*.jpg"))
+
+    with open(f"{self.video_dir}/intrinsics.json") as f:
+      cam_params = json.load(f)
+    # print(cam_params)
+    cx = cam_params['ppx']
+    cy = cam_params['ppy']
+    fx = cam_params['fx']
+    fy = cam_params['fy']
+
+    self.K = np.array([fx,0,cx,0,fy,cy,0,0,1]).reshape((3,3))
+
+    # self.K = np.loadtxt(f'{video_dir}/cam_K.txt').reshape(3,3)
+    self.id_strs = []
+    for color_file in self.color_files:
+      id_str = os.path.basename(color_file).replace('.jpg','')
+      self.id_strs.append(id_str)
+    self.H,self.W = cv2.imread(self.color_files[0]).shape[:2]
+
+    if shorter_side is not None:
+      self.downscale = shorter_side/min(self.H, self.W)
+
+    self.H = int(self.H*self.downscale)
+    self.W = int(self.W*self.downscale)
+    self.K[:2] *= self.downscale
+
+    self.gt_pose_files = sorted(glob.glob(f'{self.video_dir}/annotated_poses/*'))
+
+    self.videoname_to_object = {
+      'bleach0': "021_bleach_cleanser",
+      'bleach_hard_00_03_chaitanya': "021_bleach_cleanser",
+      'cracker_box_reorient': '003_cracker_box',
+      'cracker_box_yalehand0': '003_cracker_box',
+      'mustard0': '006_mustard_bottle',
+      'mustard_easy_00_02': '006_mustard_bottle',
+      'sugar_box1': '004_sugar_box',
+      'sugar_box_yalehand0': '004_sugar_box',
+      'tomato_soup_can_yalehand0': '005_tomato_soup_can',
+    }
+
+
+  def get_video_name(self):
+    return self.video_dir.split('/')[-1]
+
+  def __len__(self):
+    return len(self.color_files)
+
+  def get_gt_pose(self,i):
+    try:
+      pose = np.loadtxt(self.gt_pose_files[i]).reshape(4,4)
+      return pose
+    except:
+      logging.info("GT pose not found, return None")
+      return None
+
+
+  def get_color(self,i):
+    color = imageio.imread(self.color_files[i])[...,:3]
+    color = cv2.resize(color, (self.W,self.H), interpolation=cv2.INTER_NEAREST)
+    return color
+
+  def get_mask(self,i):
+    mask = cv2.imread(self.color_files[i].replace('rgb','masks'),-1)
+    if len(mask.shape)==3:
+      for c in range(3):
+        if mask[...,c].sum()>0:
+          mask = mask[...,c]
+          break
+    mask = cv2.resize(mask, (self.W,self.H), interpolation=cv2.INTER_NEAREST).astype(bool).astype(np.uint8)
+    return mask
+
+  def get_depth(self,i):
+    depth_path = self.color_files[i].replace('JPEGImages','depth')
+    depth_path = depth_path.replace('.jpg','.png')
+    depth = cv2.imread(depth_path,-1)/1e3
+    print('orig depth',depth.shape,depth.dtype)
+    depth = cv2.resize(depth, (self.W,self.H), interpolation=cv2.INTER_NEAREST)
+    depth[(depth<0.1) | (depth>=self.zfar)] = 0
+    return depth
+
+
+  def get_xyz_map(self,i):
+    depth = self.get_depth(i)
+    xyz_map = depth2xyzmap(depth, self.K)
+    return xyz_map
+
+  def get_occ_mask(self,i):
+    hand_mask_file = self.color_files[i].replace('rgb','masks_hand')
+    occ_mask = np.zeros((self.H,self.W), dtype=bool)
+    if os.path.exists(hand_mask_file):
+      occ_mask = occ_mask | (cv2.imread(hand_mask_file,-1)>0)
+
+    right_hand_mask_file = self.color_files[i].replace('rgb','masks_hand_right')
+    if os.path.exists(right_hand_mask_file):
+      occ_mask = occ_mask | (cv2.imread(right_hand_mask_file,-1)>0)
+
+    occ_mask = cv2.resize(occ_mask, (self.W,self.H), interpolation=cv2.INTER_NEAREST)
+
+    return occ_mask.astype(np.uint8)
+
+  def get_gt_mesh(self):
+    ob_name = self.videoname_to_object[self.get_video_name()]
+    YCB_VIDEO_DIR = os.getenv('YCB_VIDEO_DIR')
+    mesh = trimesh.load(f'{YCB_VIDEO_DIR}/models/{ob_name}/textured_simple.obj')
+    return mesh
+
+
 class BopBaseReader:
   def __init__(self, base_dir, zfar=np.inf, resize=1):
     self.base_dir = base_dir
