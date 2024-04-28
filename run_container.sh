@@ -49,4 +49,6 @@ echo 'Unzipping weights...'; \
 unzip -qo ${DIR}/weights/weight1.zip -d ${DIR}/weights/ && \
 unzip -qo ${DIR}/weights/weight2.zip -d ${DIR}/weights/ && \
 rm ${DIR}/weights/*.zip; \
+echo 'Running build_all_intelligent.sh...'; \
+bash ${DIR}/build_all_intelligent.sh; \
 cd $DIR && python run_avocado.py --test_scene_dir '${TEST_SCENE_DIR}' && exec bash"
