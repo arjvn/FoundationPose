@@ -58,3 +58,20 @@ RUN conda activate my &&\
 
 ENV SHELL=/bin/bash
 RUN ln -sf /bin/bash /bin/sh
+
+## Get weights
+RUN pip install gdown &&\
+    apt install unzip
+
+RUN gdown --id 1rOoyVobghEQuUfOJmHj8gjZ-UwwzNDk_ -O weights/ &&\
+    gdown --id 1uh6OETH9k-vIiqOxIkQy9muHXKi7U98o -O weights/ 
+RUN cd weights &&\
+    unzip -v '*.zip' &&\
+    rm *.zip
+
+# Set the symbolic link for gmake within the Dockerfile:
+RUN ln -sf /usr/bin/make /usr/bin/gmake
+
+COPY build_all_intelligent.sh build_all_intelligent.sh
+RUN chmod +x build_all_intelligent.sh
+RUN ./build_all_intelligent.sh
