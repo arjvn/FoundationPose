@@ -61,7 +61,3 @@ RUN ln -sf /bin/bash /bin/sh
 
 # Set the symbolic link for gmake within the Dockerfile:
 RUN ln -sf /usr/bin/make /usr/bin/gmake
-
-COPY build_all_intelligent.sh build_all_intelligent.sh
-RUN chmod +x build_all_intelligent.sh
-RUN ./build_all_intelligent.sh
