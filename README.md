@@ -1,11 +1,11 @@
-# FoundationPose: Unified 6D Pose Estimation and Tracking of Novel Objects
+# 🚀 FoundationPose: Unified 6D Pose Estimation and Tracking of Novel Objects
 
 
 We present FoundationPose, a unified foundation model for 6D object pose estimation and tracking, supporting both model-based and model-free setups. Our approach can be instantly applied at test-time to a novel object without fine-tuning, as long as its CAD model is given, or a small number of reference images are captured. We bridge the gap between these two setups with a neural implicit representation that allows for effective novel view synthesis, keeping the downstream pose estimation modules invariant under the same unified framework. Strong generalizability is achieved via large-scale synthetic training, aided by a large language model (LLM), a novel transformer-based architecture, and contrastive learning formulation. Extensive evaluation on multiple public datasets involving challenging scenarios and objects indicate our unified approach outperforms existing methods specialized for each task by a large margin. In addition, it even achieves comparable results to instance-level methods despite the reduced assumptions.
 
 <img src="assets/intro.jpg" width="70%">
 
-## Quick start
+## 🌟 Quick start
 
 With this one command you can run a demo of the code. If you have your own data repalce the ```TEST_SCENE_DIR``` with the name of your dataset. 
 Please place your data in the ```test_data``` folder.
@@ -14,13 +14,13 @@ Please place your data in the ```test_data``` folder.
 make leap-run TEST_SCENE_DIR="avocado_translate_1"
 ```
 
-- avocado_translate_1 is our test dataset. If used the test data is automatically downloaded from here and placed in the ```test_data``` folder by the ```run_container.sh```.
-- the model files are downloaded from here and placed in the ```weights``` folder by the dockerfile.
+- 🥑 avocado_translate_1 is our test dataset. If used the test data is automatically downloaded from here and placed in the ```test_data``` folder by the ```run_container.sh```.
+- 🏋️‍♂️ the model files are downloaded from here and placed in the ```weights``` folder by the dockerfile.
 
 
-## Functionality
+## 💡 Functionality
 
-### 1. Mesh creation:
+### 1. 🔬 Mesh creation:
 This repository contains pure python scripts to create object masks, bounding box labels, and 3D reconstructed object mesh (.ply) for object sequences filmed with an RGB-D camera. This project can prepare training and testing data for various deep learning projects such as 6D object pose estimation projects singleshotpose, and many object detection (e.g., faster rcnn) and instance segmentation (e.g., mask rcnn) projects. Ideally, if you have realsense cameras and have some experience with MeshLab or Blender, creating your customized dataset should be as easy as executing a few command line arguments.
 
 This codes in this repository implement a raw 3D model acquisition pipeline through aruco markers and ICP registration. The raw 3D model obtained needs to be processed and noise-removed in a mesh processing software. After this step, there are functions to generate required labels in automatically.
@@ -37,24 +37,23 @@ A custom mesh of an avocado has been created and provided for the use of this pr
   <img src="assets/avocado_aruco_track.gif" width="33%" />
 </p>
 
-### 2. Pose tracking with RGBD realsense camera
+### 2. 🎥 Pose Tracking with RGBD Realsense Camera
 
->>>> insert avocado translate video <<<<
 <img src="assets/track_avocado_translate_1.gif" width="70%">
 
 
 
-## Prerequisites/ Common debugging
+## 🛠️ Prerequisites / Common Debugging 
 
 Before you begin, ensure your system meets the following requirements to make the most of FoundationPose:
 
-- **Docker**: You must have Docker installed on your system. For GPU support, ensure you're using Docker Engine version 19.03 or newer, which natively supports NVIDIA GPUs via the NVIDIA Container Toolkit.
+- **🐳 Docker**: You must have Docker installed on your system. For GPU support, ensure you're using Docker Engine version 19.03 or newer, which natively supports NVIDIA GPUs via the NVIDIA Container Toolkit.
 
-- **NVIDIA Docker Toolkit**: If you plan to utilize GPU acceleration, install the [NVIDIA Container Toolkit](https://github.com/NVIDIA/nvidia-docker) to allow Docker to utilize the GPU directly.
+- **🏗️ NVIDIA Docker Toolkit***: If you plan to utilize GPU acceleration, install the [NVIDIA Container Toolkit](https://github.com/NVIDIA/nvidia-docker) to allow Docker to utilize the GPU directly.
 
-- **Python 3.8+**: The software is compatible with Python 3.8 or higher. Ensure that your Python environment is set up correctly, preferably managed through virtual environments like `conda` or `venv`.
+- **🐍 Python 3.8+**: The software is compatible with Python 3.8 or higher. Ensure that your Python environment is set up correctly, preferably managed through virtual environments like `conda` or `venv`.
 
-- **CUDA-Compatible GPU Setup**: A CUDA-compatible NVIDIA GPU is necessary to take full advantage of the foundation model's capabilities. Ensure you have the latest compatible NVIDIA drivers and CUDA version installed that match the toolkit requirements.
+- **🖥️ CUDA-Compatible GPU Setup**: A CUDA-compatible NVIDIA GPU is necessary to take full advantage of the foundation model's capabilities. Ensure you have the latest compatible NVIDIA drivers and CUDA version installed that match the toolkit requirements.
 
 ### Setting Up Docker for GPU Access
 
@@ -89,7 +88,7 @@ Before you begin, ensure your system meets the following requirements to make th
 
 ### Additional Requirements
 
-- **Internet Connection**: A stable internet connection is required to download dependencies, Docker images, and datasets.
+- **🌐 Internet Connection**: A stable internet connection is required to download dependencies, Docker images, and datasets.
 - **Disk Space**: Ensure you have sufficient disk space, especially for storing large datasets and building Docker images. At least 50 GB of free space is recommended for a full setup.
 
 With these prerequisites met, you can proceed with the installation and setup of the module.
