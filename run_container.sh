@@ -42,11 +42,11 @@ if [ '${TEST_SCENE_DIR}' == 'test_data/avocado_translate_1' ]; then \
     fi \
 fi; \
 echo 'Downloading model weights...'; \
-mkdir -p ${WEIGHTS_DIR}; \
-gdown --id ${WEIGHT_ID1} -O ${WEIGHTS_DIR}/ && \
-gdown --id ${WEIGHT_ID2} -O ${WEIGHTS_DIR}/ && \
+mkdir -p ${DIR}/weights; \
+gdown --id 1rOoyVobghEQuUfOJmHj8gjZ-UwwzNDk_ -O ${DIR}/weights/weight1.zip && \
+gdown --id 1uh6OETH9k-vIiqOxIkQy9muHXKi7U98o -O ${DIR}/weights/weight2.zip && \
 echo 'Unzipping weights...'; \
-cd ${WEIGHTS_DIR} && \
-unzip -v '*.zip' && \
-rm *.zip; \
+unzip -qo ${DIR}/weights/weight1.zip -d ${DIR}/weights/ && \
+unzip -qo ${DIR}/weights/weight2.zip -d ${DIR}/weights/ && \
+rm ${DIR}/weights/*.zip; \
 cd $DIR && python run_avocado.py --test_scene_dir '${TEST_SCENE_DIR}' && exec bash"
