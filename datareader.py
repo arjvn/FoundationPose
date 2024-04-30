@@ -9,6 +9,7 @@
 
 from Utils import *
 import json,os,sys
+from natsort import natsorted
 
 
 BOP_LIST = ['lmo','tless','ycbv','hb','tudl','icbin','itodd']
@@ -281,7 +282,7 @@ class Realsense2Reader:
 
     # video_path = '/home/deeplearner/Documents/haozheng_hdd/ObjectDatasetTools/LINEMOD/avocado_1/'
     video_path = video_dir
-    self.color_files  = sorted(glob.glob(f"{video_path}/JPEGImages/*.jpg"))
+    self.color_files  = natsorted(glob.glob(f"{video_path}/JPEGImages/*.jpg"))
 
     with open(f"{self.video_dir}/intrinsics.json") as f:
       cam_params = json.load(f)
