@@ -12,7 +12,7 @@ DIR=$(pwd)
 xhost +
 
 # Define the Google Drive URL and file ID for the dataset
-GDRIVE_URL="https://drive.google.com/uc?id=1WgyOXzUa_zOHbtz_e-dZDVLymAqkJqlQ"
+GDRIVE_URL="https://drive.google.com/uc?id=1dN2IHAZwqk4nSTPY72I1y81im-XRcOXZ"
 DATASET_NAME="avocado_dataset.zip"
 TARGET_DIR="$DIR/test_data"
 CHECK_TEST_SCENE_DIR="$DIR/test_data/avocado_translate_1/JPEGImages" # Ensuring full path is correct
