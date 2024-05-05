@@ -17,6 +17,11 @@ make leap-run TEST_SCENE_DIR="avocado_translate_1"
 - 🥑 avocado_translate_1 is our test dataset. If used the test data is automatically downloaded from here and placed in the ```test_data``` folder by the ```run_container.sh```.
 - 🏋️‍♂️ the model files are downloaded from here and placed in the ```weights``` folder by the dockerfile.
 
+The comand of run the evaluation of benchmark:
+```
+python run_avocado.py --test_scene_dir '${TEST_SCENE_DIR} --compare
+```
+
 
 ## 💡 Functionality
 
