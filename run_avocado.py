@@ -36,6 +36,10 @@ if __name__=='__main__':
   is_compare = args.compare
   os.system(f'rm -rf {debug_dir}/* && mkdir -p {debug_dir}/track_vis {debug_dir}/ob_in_cam')
 
+  if is_compare:
+        trans_error_list = []
+        rot_error_list = []
+
   to_origin, extents = trimesh.bounds.oriented_bounds(mesh)
   bbox = np.stack([-extents/2, extents/2], axis=0).reshape(2,3)
 
@@ -82,6 +86,8 @@ if __name__=='__main__':
 
         ### eval translation error and rotation error
         trans_error, rot_error = trans_rot_error(center_pose,center_gt_pose)
+        trans_error_list.append(trans_error)
+        rot_error_list.append(rot_error)
         print('trans_error, rot_error',trans_error, rot_error)     
 
       cv2.imshow('1', vis[...,::-1])
@@ -92,4 +98,8 @@ if __name__=='__main__':
     if debug>=2:
       os.makedirs(f'{reader.video_dir}/track_vis', exist_ok=True)
       imageio.imwrite(f'{reader.video_dir}/track_vis/{reader.id_strs[i]}.png', vis)
+  if is_compare:
+    trans_error_avg = np.mean(trans_error_list)
+    rot_error_avg = np.mean(rot_error_list)
+    print('trans_error_avg: {}|rot_error_avg:{}'.format(trans_error_avg,rot_error_avg))
 
