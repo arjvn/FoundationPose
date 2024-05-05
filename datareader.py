@@ -278,7 +278,6 @@ class Realsense2Reader:
     self.video_dir = video_dir
     self.downscale = downscale
     self.zfar = zfar
-    # self.color_files = sorted(glob.glob(f"{self.video_dir}/color/*.jpg"))
 
     # video_path = '/home/deeplearner/Documents/haozheng_hdd/ObjectDatasetTools/LINEMOD/avocado_1/'
     video_path = video_dir
@@ -286,7 +285,6 @@ class Realsense2Reader:
 
     with open(f"{self.video_dir}/intrinsics.json") as f:
       cam_params = json.load(f)
-    # print(cam_params)
     cx = cam_params['ppx']
     cy = cam_params['ppy']
     fx = cam_params['fx']
@@ -294,7 +292,6 @@ class Realsense2Reader:
 
     self.K = np.array([fx,0,cx,0,fy,cy,0,0,1]).reshape((3,3))
 
-    # self.K = np.loadtxt(f'{video_dir}/cam_K.txt').reshape(3,3)
     self.id_strs = []
     for color_file in self.color_files:
       id_str = os.path.basename(color_file).replace('.jpg','')
@@ -308,19 +305,8 @@ class Realsense2Reader:
     self.W = int(self.W*self.downscale)
     self.K[:2] *= self.downscale
 
-    self.gt_pose_files = sorted(glob.glob(f'{self.video_dir}/annotated_poses/*'))
-
-    self.videoname_to_object = {
-      'bleach0': "021_bleach_cleanser",
-      'bleach_hard_00_03_chaitanya': "021_bleach_cleanser",
-      'cracker_box_reorient': '003_cracker_box',
-      'cracker_box_yalehand0': '003_cracker_box',
-      'mustard0': '006_mustard_bottle',
-      'mustard_easy_00_02': '006_mustard_bottle',
-      'sugar_box1': '004_sugar_box',
-      'sugar_box_yalehand0': '004_sugar_box',
-      'tomato_soup_can_yalehand0': '005_tomato_soup_can',
-    }
+    # self.gt_pose_files = f'{self.video_dir}/annotated_poses/*'
+    self.gt_pose = np.load(os.path.join(self.video_dir,'transforms.npy'))
 
 
   def get_video_name(self):
@@ -331,7 +317,7 @@ class Realsense2Reader:
 
   def get_gt_pose(self,i):
     try:
-      pose = np.loadtxt(self.gt_pose_files[i]).reshape(4,4)
+      pose = self.gt_pose[i].reshape(4,4)
       return pose
     except:
       logging.info("GT pose not found, return None")

@@ -18,6 +18,8 @@ if __name__=='__main__':
   parser.add_argument('--mesh_file', type=str, default=f'{code_dir}/3d_model/avocado/avocado_processed.ply')
   parser.add_argument('--test_scene_dir', type=str, default='test_data/avocado_translate_1')
   parser.add_argument('--est_refine_iter', type=int, default=5)
+  # parser.add_argument('--compare', type=bool, default=False)
+  parser.add_argument('--compare', action='store_true')
   parser.add_argument('--track_refine_iter', type=int, default=2)
   parser.add_argument('--debug', type=int, default=1)
   parser.add_argument('--debug_dir', type=str, default=f'{code_dir}/debug')
@@ -30,6 +32,7 @@ if __name__=='__main__':
 
   debug = args.debug
   debug_dir = args.debug_dir
+  is_compare = args.compare
   os.system(f'rm -rf {debug_dir}/* && mkdir -p {debug_dir}/track_vis {debug_dir}/ob_in_cam')
 
   to_origin, extents = trimesh.bounds.oriented_bounds(mesh)
@@ -47,6 +50,7 @@ if __name__=='__main__':
     logging.info(f'i:{i}')
     color = reader.get_color(i)
     depth = reader.get_depth(i)
+    gt_pose = reader.get_gt_pose(i)
     if i==0:
       mask = reader.get_mask(0).astype(bool)
       pose = est.register(K=reader.K, rgb=color, depth=depth, ob_mask=mask, iteration=args.est_refine_iter)
@@ -69,8 +73,15 @@ if __name__=='__main__':
       center_pose = pose@np.linalg.inv(to_origin)
       vis = draw_posed_3d_box(reader.K, img=color, ob_in_cam=center_pose, bbox=bbox)
       vis = draw_xyz_axis(color, ob_in_cam=center_pose, scale=0.1, K=reader.K, thickness=3, transparency=0, is_input_rgb=True)
+
+      if is_compare:
+        vis = draw_posed_3d_box(reader.K, img=color, ob_in_cam=gt_pose, bbox=bbox)
+        vis = draw_xyz_axis(color, ob_in_cam=gt_pose, scale=0.1, K=reader.K, thickness=3, transparency=0.2, is_input_rgb=True)        
+
+
       cv2.imshow('1', vis[...,::-1])
       cv2.waitKey(1)
+
 
 
     if debug>=2:
