@@ -318,6 +318,7 @@ class Realsense2Reader:
   def get_gt_pose(self,i):
     try:
       pose = self.gt_pose[i].reshape(4,4)
+      pose = np.linalg.inv(pose)
       return pose
     except:
       logging.info("GT pose not found, return None")

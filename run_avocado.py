@@ -10,12 +10,13 @@
 from estimater import *
 from datareader import *
 import argparse
+from eval_utils import trans_rot_error
 
 
 if __name__=='__main__':
   parser = argparse.ArgumentParser()
   code_dir = os.path.dirname(os.path.realpath(__file__))
-  parser.add_argument('--mesh_file', type=str, default=f'{code_dir}/3d_model/avocado/avocado_processed.ply')
+  parser.add_argument('--mesh_file', type=str, default=f'{code_dir}/3d_model/avocado/avocado2_mesh.ply')
   parser.add_argument('--test_scene_dir', type=str, default='test_data/avocado_translate_1')
   parser.add_argument('--est_refine_iter', type=int, default=5)
   # parser.add_argument('--compare', type=bool, default=False)
@@ -75,9 +76,13 @@ if __name__=='__main__':
       vis = draw_xyz_axis(color, ob_in_cam=center_pose, scale=0.1, K=reader.K, thickness=3, transparency=0, is_input_rgb=True)
 
       if is_compare:
-        vis = draw_posed_3d_box(reader.K, img=color, ob_in_cam=gt_pose, bbox=bbox)
-        vis = draw_xyz_axis(color, ob_in_cam=gt_pose, scale=0.1, K=reader.K, thickness=3, transparency=0.2, is_input_rgb=True)        
+        center_gt_pose = gt_pose@np.linalg.inv(to_origin)
+        vis = draw_posed_3d_box(reader.K, img=color, ob_in_cam=center_gt_pose, bbox=bbox, line_color=(255,0,0))
+        vis = draw_xyz_axis(color, ob_in_cam=center_gt_pose, scale=0.1, K=reader.K, thickness=3, transparency=0, is_input_rgb=True)    
 
+        ### eval translation error and rotation error
+        trans_error, rot_error = trans_rot_error(center_pose,center_gt_pose)
+        print('trans_error, rot_error',trans_error, rot_error)     
 
       cv2.imshow('1', vis[...,::-1])
       cv2.waitKey(1)
