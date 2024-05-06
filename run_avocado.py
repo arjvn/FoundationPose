@@ -99,7 +99,15 @@ if __name__=='__main__':
       os.makedirs(f'{reader.video_dir}/track_vis', exist_ok=True)
       imageio.imwrite(f'{reader.video_dir}/track_vis/{reader.id_strs[i]}.png', vis)
   if is_compare:
+    from eval_utils import plot_error
+    trans_error_list = np.array(trans_error_list)
+    rot_error_list = np.array(rot_error_list)
+
+    print(trans_error_list.shape,rot_error_list.shape)
+    plot_error(trans_error_list,rot_error_list)
+
     trans_error_avg = np.mean(trans_error_list)
     rot_error_avg = np.mean(rot_error_list)
     print('trans_error_avg: {}|rot_error_avg:{}'.format(trans_error_avg,rot_error_avg))
+
 

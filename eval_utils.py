@@ -40,6 +40,39 @@ def trans_rot_error(pose_pred, pose_targets):
         reproject_b_rot_angle = rotationMatrixToEulerAngles(pred_pose_rot)
     except:
         print("rotation is not orthogonal")
-    trans_error = np.linalg.norm(gt_pose_trans-pred_pose_trans)
+    # trans_error = np.linalg.norm(gt_pose_trans-pred_pose_trans,axis=0)
+    trans_error = np.absolute(np.array(gt_pose_trans) - np.array(pred_pose_trans))
     rot_error = np.absolute(b_rot_angle-reproject_b_rot_angle)
     return trans_error, rot_error
+
+def plot_error(array1,array2):
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    # Create subplots
+    fig, axs = plt.subplots(3, 2, figsize=(12, 12))
+    array1 = 100 *array1
+
+    axs[0, 0].plot(array1[:, 0], label='Trans Err(cm)')
+    axs[0, 0].set_title('Trans Err on X-axis')
+    axs[1,0].plot(array1[:, 1], label='Trans Err(cm)')
+    axs[1,0].set_title('Trans Err on Y-axis')
+    axs[2, 0].plot(array1[:, 2], label='Trans Err(cm)')
+    axs[2, 0].set_title('Trans Err on Z-axis')
+
+    axs[0, 1].plot(array2[:, 0], label='Rot Err(degree)')
+    axs[0, 1].set_title('Rot Err on X-axis')
+    axs[1, 1].plot(array2[:, 1], label='Rot Err(degree)')
+    axs[1, 1].set_title('Rot Err on Y-axis')
+    axs[2, 1].plot(array2[:, 2], label='Rot Err(degree)')
+    axs[2, 1].set_title('Rot Err on Z-axis')
+
+    # Add legend
+    axs[0, 0].legend()
+    axs[0, 1].legend()
+
+    # Adjust layout
+    plt.tight_layout()
+
+    # Show plot
+    plt.show()
