@@ -53,6 +53,9 @@ def plot_error(array1,array2):
     fig, axs = plt.subplots(3, 2, figsize=(12, 12))
     array1 = 100 *array1
 
+    array2_reverse = np.absolute(360-array2)
+    array2 = np.minimum(array2, array2_reverse)
+
     axs[0, 0].plot(array1[:, 0], label='Trans Err(cm)')
     axs[0, 0].set_title('Trans Err on X-axis')
     axs[1,0].plot(array1[:, 1], label='Trans Err(cm)')
