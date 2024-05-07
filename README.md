@@ -49,11 +49,15 @@ A custom mesh of an avocado has been created and provided for the use of this pr
 ### 3. Benchmarking
 
 Benchmarking has been carried out and the error graphs have been created in order to visualise the error.
+
 <p style="display: flex; align-items: center; justify-content: space-around;">
   <img src="assets/error_visualised.gif" width="40%" />
-  <img src="assets/error_graphed.png" width="40%" />
+
 </p>
 
+<p style="display: flex; align-items: center; justify-content: space-around;">
+  <img src="assets/error_graphed.png" width="70%" />
+</p>
 ## 🛠️ Prerequisites / Common Debugging 
 
 Before you begin, ensure your system meets the following requirements to make the most of FoundationPose:
