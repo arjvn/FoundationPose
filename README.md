@@ -50,9 +50,8 @@ A custom mesh of an avocado has been created and provided for the use of this pr
 
 Benchmarking has been carried out and the error graphs have been created in order to visualise the error.
 <p style="display: flex; align-items: center; justify-content: space-around;">
-  <img src="assets/avodaco_point_cloud_zoomed.jpeg" width="33%" />
-  <img src="assets/avodaco_point_mesh.jpeg" width="29%" />
-  <img src="assets/avocado_aruco_track.gif" width="33%" />
+  <img src="assets/error_visualised.gif" width="40%" />
+  <img src="assets/error_graphed.png" width="40%" />
 </p>
 
 ## 🛠️ Prerequisites / Common Debugging 
