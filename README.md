@@ -59,6 +59,7 @@ Benchmarking has been carried out and the error graphs have been created in orde
   <img src="assets/error_graphed.png" width="45%" />
   <img src="assets/6dof_pose_graphed.png" width="45%" />
 </p>
+* x-axis is time(s)
 
 #### Left Image (Error Graphed):
 This graph illustrates the error metrics over a series of time intervals. Each line shows how the error rates change over time in each dimention of the 6dof pose. The x-axis indicates time, while the y-axis shows the magnitude of the error.
