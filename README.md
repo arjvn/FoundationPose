@@ -60,9 +60,9 @@ Benchmarking has been carried out and the error graphs have been created in orde
   <img src="assets/6dof_pose_graphed.png" width="45%" />
 </p>
 
-Left Image (Error Graphed)
+#### Left Image (Error Graphed):
 This graph illustrates the error metrics over a series of time intervals. Each line shows how the error rates change over time in each dimention of the 6dof pose. The x-axis indicates time, while the y-axis shows the magnitude of the error.
-Right Image (Pose 6DoF)
+#### Right Image (Pose 6DoF):
 This image depicts a graphical representation of an object in 6 degrees of freedom (6DoF), which includes three translational movements (up/down, left/right, forward/backward) and three rotational movements (pitch, yaw, roll). The red line is the ground truth while the blue line is predicted 6dof pose.
 
 ## 🛠️ Prerequisites / Common Debugging 
