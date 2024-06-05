@@ -149,8 +149,25 @@ To reduce initialization and runtime processing times dynamically without compro
 - **Layer-Specific Quantization**: Developing more refined quantization techniques for attention and transformer layers could mitigate performance losses.
 - **Evaluation Metrics**: Additional metrics and profiling are required to understand the bottlenecks and optimize the quantization process effectively.
 
-### Running 
+### Running Dynamic Quantization
 
+There are two parameters which quantize the models at run time:
+
+- Set quantized to True in ```learning.training.predict_pose_refine.PoseRefinePredictor.__init__``` to quantize the PoseRefinePredictor model
+
+```python
+class PoseRefinePredictor:
+  def __init__(self, quantized=True):
+```
+
+- Set quantized to True in ```learning.training.predict_score.ScorePredictor.__init__``` to quantize the PoseRefinePredictor model
+
+```python
+class ScorePredictor:
+  def __init__(self, amp=True, quantized=True):
+```
+
+Note: these have been set to true - merely run python ```run_demo.py``` or any other interface script that you have.
 
 ## Method 2: Quantization using ONNX
 
@@ -159,6 +176,8 @@ As an alternative, testing will be carried out via conversion of the models to t
 1. First the models need to be converted to the ONNX format
 2. The ONNX models need to be carefully quantized - noting the different quantization methods and levels of granularity
 3. Finally and the most time consuming - the inference script needs to be modifies to allow for use of the ONNX runtime as quantized ONNX models can not directly be used by torch.load().
+
+Task 1 has been completed and the script can be found in  ```quantization/onnx_quantization/create_refinenet_onnx.py```. Work on task 2 and 3 is on going and scripts can be found in the same folder ```quantization/onnx_quantization```. Note that testing is still being carried out on these.
 
 ### Testing ONNX Given Torch Quantization Results
 
