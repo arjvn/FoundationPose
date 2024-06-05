@@ -54,6 +54,9 @@ To reduce initialization and runtime processing times dynamically without compro
 - **Layer-Specific Quantization**: Developing more refined quantization techniques for attention and transformer layers could mitigate performance losses.
 - **Evaluation Metrics**: Additional metrics and profiling are required to understand the bottlenecks and optimize the quantization process effectively.
 
+### Running 
+
+
 ## Method 2: Quantization using ONNX
 
 As an alternative, testing will be carried out via conversion of the models to the ONNX format. This involves three key steps:
