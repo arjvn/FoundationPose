@@ -114,48 +114,103 @@ def make_crop_data_batch(render_size, ob_in_cams, mesh, rgb, depth, K, crop_rati
   return pose_data
 
 
+# class ScorePredictor:
+#   def __init__(self, amp=True):
+#     self.amp = amp
+#     self.run_name = "2024-01-11-20-02-45"
+
+#     model_name = 'model_quantized.pth'
+#     code_dir = os.path.dirname(os.path.realpath(__file__))
+#     ckpt_dir = f'{code_dir}/../../weights/{self.run_name}/{model_name}'
+
+#     self.cfg = OmegaConf.load(f'{code_dir}/../../weights/{self.run_name}/config.yml')
+
+#     self.cfg['ckpt_dir'] = ckpt_dir
+#     self.cfg['enable_amp'] = True
+
+#     ########## Defaults, to be backward compatible
+#     if 'use_normal' not in self.cfg:
+#       self.cfg['use_normal'] = False
+#     if 'use_BN' not in self.cfg:
+#       self.cfg['use_BN'] = False
+#     if 'zfar' not in self.cfg:
+#       self.cfg['zfar'] = np.inf
+#     if 'c_in' not in self.cfg:
+#       self.cfg['c_in'] = 4
+#     if 'normalize_xyz' not in self.cfg:
+#       self.cfg['normalize_xyz'] = False
+#     if 'crop_ratio' not in self.cfg or self.cfg['crop_ratio'] is None:
+#       self.cfg['crop_ratio'] = 1.2
+
+#     logging.info(f"self.cfg: \n {OmegaConf.to_yaml(self.cfg)}")
+
+#     self.dataset = ScoreMultiPairH5Dataset(cfg=self.cfg, mode='test', h5_file=None, max_num_key=1)
+#     self.model = ScoreNetMultiPair(cfg=self.cfg, c_in=self.cfg['c_in']).cuda()
+
+#     logging.info(f"Using pretrained model from {ckpt_dir}")
+#     ckpt = torch.load(ckpt_dir)
+#     if 'model' in ckpt:
+#       ckpt = ckpt['model']
+#     self.model.load_state_dict(ckpt)
+
+#     self.model.cuda().eval()
+#     logging.info("init done")
+
 class ScorePredictor:
-  def __init__(self, amp=True):
-    self.amp = amp
-    self.run_name = "2024-01-11-20-02-45"
+  def __init__(self, amp=True, quantized=True):
+      self.amp = amp
+      self.run_name = "2024-01-11-20-02-45"
 
-    model_name = 'model_best.pth'
-    code_dir = os.path.dirname(os.path.realpath(__file__))
-    ckpt_dir = f'{code_dir}/../../weights/{self.run_name}/{model_name}'
+      model_name = 'model_best.pth'
+      code_dir = os.path.dirname(os.path.realpath(__file__))
+      ckpt_dir = f'{code_dir}/../../weights/{self.run_name}/{model_name}'
 
-    self.cfg = OmegaConf.load(f'{code_dir}/../../weights/{self.run_name}/config.yml')
+      self.cfg = OmegaConf.load(f'{code_dir}/../../weights/{self.run_name}/config.yml')
+      self.cfg['ckpt_dir'] = ckpt_dir
+      self.cfg['enable_amp'] = True
 
-    self.cfg['ckpt_dir'] = ckpt_dir
-    self.cfg['enable_amp'] = True
+      # Set defaults for backward compatibility
+      self.cfg.setdefault('use_normal', False)
+      self.cfg.setdefault('use_BN', False)
+      self.cfg.setdefault('zfar', np.inf)
+      self.cfg.setdefault('c_in', 4)
+      self.cfg.setdefault('normalize_xyz', False)
+      self.cfg.setdefault('crop_ratio', 1.2)
 
-    ########## Defaults, to be backward compatible
-    if 'use_normal' not in self.cfg:
-      self.cfg['use_normal'] = False
-    if 'use_BN' not in self.cfg:
-      self.cfg['use_BN'] = False
-    if 'zfar' not in self.cfg:
-      self.cfg['zfar'] = np.inf
-    if 'c_in' not in self.cfg:
-      self.cfg['c_in'] = 4
-    if 'normalize_xyz' not in self.cfg:
-      self.cfg['normalize_xyz'] = False
-    if 'crop_ratio' not in self.cfg or self.cfg['crop_ratio'] is None:
-      self.cfg['crop_ratio'] = 1.2
+      # Initialize the model
+      tic = time.time()
+      self.model = ScoreNetMultiPair(cfg=self.cfg, c_in=self.cfg['c_in']).cuda()
 
-    logging.info(f"self.cfg: \n {OmegaConf.to_yaml(self.cfg)}")
+      ckpt = torch.load(ckpt_dir)
+      if 'model' in ckpt:
+          ckpt = ckpt['model']
+      self.model.load_state_dict(ckpt)
 
-    self.dataset = ScoreMultiPairH5Dataset(cfg=self.cfg, mode='test', h5_file=None, max_num_key=1)
-    self.model = ScoreNetMultiPair(cfg=self.cfg, c_in=self.cfg['c_in']).cuda()
+      ## TODO: need to test adding in nn.linear and attention layer
+      if quantized:
+          print("\n>>>>> Quantizing and inti ScorePredictor model <<<<<\n")
+          self.model = torch.quantization.quantize_dynamic(
+              self.model,
+              {torch.nn.BatchNorm2d, torch.nn.Conv2d, torch.nn.ReLU},
+              dtype=torch.qint8
+          )
+        
+      tock = time.time()
+      self.model.cuda().eval()
 
-    logging.info(f"Using pretrained model from {ckpt_dir}")
-    ckpt = torch.load(ckpt_dir)
-    if 'model' in ckpt:
-      ckpt = ckpt['model']
-    self.model.load_state_dict(ckpt)
+      if quantized:
+          torch.save(self.model.state_dict(), "temp.p")
+          print('Quantized model Size (MB):', os.path.getsize("temp.p")/1e6)
+          print('Original model Size (MB):', os.path.getsize(ckpt_dir)/1e6)
+          os.remove('temp.p')
+      
+      logging.info(f"\n\nModel initialization took {tock-tic:.2f} seconds | Quantized: {quantized}\n\n")
+      logging.info("Initialization complete. Model is quantized: {}".format(quantized))
+      print("\n>>>>> Complete <<<<<\n")
+      input(f"debugging quantization {quantized}. Press Enter to continue")
 
-    self.model.cuda().eval()
-    logging.info("init done")
 
+      self.dataset = ScoreMultiPairH5Dataset(cfg=self.cfg, mode='test', h5_file=None, max_num_key=1)
 
   @torch.inference_mode()
   def predict(self, rgb, depth, K, ob_in_cams, normal_map=None, get_vis=False, mesh=None, mesh_tensors=None, glctx=None, mesh_diameter=None):

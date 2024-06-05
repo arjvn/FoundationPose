@@ -26,12 +26,15 @@ from Utils import *
 
 class ScoreNetMultiPair(nn.Module):
   def __init__(self, cfg=None, c_in=4):
+  # def __init__(self, cfg=None, c_in=4, quantized=False):
     super().__init__()
     self.cfg = cfg
     if self.cfg.use_BN:
       norm_layer = nn.BatchNorm2d
     else:
       norm_layer = None
+
+    # print(f"Initializing ScoreNetMultiPair with c_in={c_in} | Quantized {quantized}")  # Debugging line
 
     self.encoderA = nn.Sequential(
       ConvBNReLU(C_in=c_in,C_out=64,kernel_size=7,stride=2, norm_layer=norm_layer),
@@ -56,6 +59,23 @@ class ScoreNetMultiPair(nn.Module):
     self.pos_embed = PositionalEmbedding(d_model=embed_dim, max_len=400)
     self.linear = nn.Linear(embed_dim, 1)
 
+    # if quantized:
+    #         self.quantize_model()
+
+  # def quantize_model(self):
+  #     print("\n>>>>>Quantizing model<<<<<\n")
+  #     # Define layers to be quantized
+  #     modules_to_quantize = [nn.Linear, nn.Conv2d, nn.BatchNorm2d, nn.ReLU, nn.MultiheadAttention]
+  #     # Apply dynamic quantization
+  #     self.encoderA = torch.quantization.quantize_dynamic(
+  #         self.encoderA, {nn.Linear: None, nn.Conv2d: None, nn.BatchNorm2d: None, nn.ReLU: None}, dtype=torch.qint8)
+  #     self.encoderAB = torch.quantization.quantize_dynamic(
+  #         self.encoderAB, {nn.Linear: None, nn.Conv2d: None, nn.BatchNorm2d: None, nn.ReLU: None}, dtype=torch.qint8)
+  #     self.att = torch.quantization.quantize_dynamic(
+  #         self.att, {nn.MultiheadAttention: None}, dtype=torch.qint8)
+  #     self.linear = torch.quantization.quantize_dynamic(
+  #         self.linear, {nn.Linear: None}, dtype=torch.qint8)
+  #     print("\n>>>>>Model quantized<<<<<\n")
 
   def extract_feat(self, A, B):
     """

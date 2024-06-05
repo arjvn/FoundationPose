@@ -91,7 +91,7 @@ def make_crop_data_batch(render_size, ob_in_cams, mesh, rgb, depth, K, crop_rati
 
 
 class PoseRefinePredictor:
-  def __init__(self,):
+  def __init__(self, quantized=True):
     logging.info("welcome")
     self.amp = True
     self.run_name = "2023-10-28-18-33-37"
@@ -131,20 +131,46 @@ class PoseRefinePredictor:
       self.cfg['normal_uint8'] = False
     logging.info(f"self.cfg: \n {OmegaConf.to_yaml(self.cfg)}")
 
-    self.dataset = PoseRefinePairH5Dataset(cfg=self.cfg, h5_file='', mode='test')
+    # initialise the model
+    tic = time.time()
     self.model = RefineNet(cfg=self.cfg, c_in=self.cfg['c_in']).cuda()
 
-    logging.info(f"Using pretrained model from {ckpt_dir}")
     ckpt = torch.load(ckpt_dir)
     if 'model' in ckpt:
       ckpt = ckpt['model']
     self.model.load_state_dict(ckpt)
 
+    # >>>>>>>
+    ## TODO: need to test adding in nn.linear and attention layer
+    if quantized:
+        print("\n>>>>> Quantizing and init PoseRefinePredictor model <<<<<\n")
+        self.model = torch.quantization.quantize_dynamic(
+            self.model,
+            {torch.nn.BatchNorm2d, torch.nn.Conv2d, torch.nn.ReLU},
+            dtype=torch.qint8
+        )
+      
+    tock = time.time()
     self.model.cuda().eval()
-    logging.info("init done")
+
+    if quantized:
+        torch.save(self.model.state_dict(), "temp.p")
+        print('Quantized model Size (MB):', os.path.getsize("temp.p")/1e6)
+        print('Original model Size (MB):', os.path.getsize(ckpt_dir)/1e6)
+        os.remove('temp.p')
+    
+    logging.info(f"\n\nModel initialization took {tock-tic:.2f} seconds | Quantized: {quantized}\n\n")
+    logging.info("Initialization complete. Model is quantized: {}".format(quantized))
+    print("\n>>>>> Complete <<<<<\n")
+    input(f"debugging quantization {quantized}. Press Enter to continue")
+
+
+
+    # <<<<<<<<
+
     self.last_trans_update = None
     self.last_rot_update = None
-
+    self.dataset = PoseRefinePairH5Dataset(cfg=self.cfg, h5_file='', mode='test')
 
   @torch.inference_mode()
   def predict(self, rgb, depth, K, ob_in_cams, xyz_map, normal_map=None, get_vis=False, mesh=None, mesh_tensors=None, glctx=None, mesh_diameter=None, iteration=5):

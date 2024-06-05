@@ -163,6 +163,7 @@ class FoundationPose:
     set_seed(0)
     logging.info('Welcome')
 
+    tic_1 = time.time()
     if self.glctx is None:
       if glctx is None:
         self.glctx = dr.RasterizeCudaContext()
@@ -172,8 +173,11 @@ class FoundationPose:
 
     depth = erode_depth(depth, radius=2, device='cuda')
     depth = bilateral_filter_depth(depth, radius=2, device='cuda')
-
+    tock_1 = time.time()
+    tic_2 = time.time()
     if self.debug>=2:
+      print("WHY")
+      input()
       xyz_map = depth2xyzmap(depth, K)
       valid = xyz_map[...,2]>=0.1
       pcd = toOpen3dCloud(xyz_map[valid], rgb[valid])
@@ -199,7 +203,8 @@ class FoundationPose:
     self.K = K
     self.ob_id = ob_id
     self.ob_mask = ob_mask
-
+    tock_2 = time.time()
+    tic_1 = time.time()
     poses = self.generate_random_pose_hypo(K=K, rgb=rgb, depth=depth, mask=ob_mask, scene_pts=None)
     poses = poses.data.cpu().numpy()
     logging.info(f'poses:{poses.shape}')
@@ -212,14 +217,18 @@ class FoundationPose:
     logging.info(f"after viewpoint, add_errs min:{add_errs.min()}")
 
     xyz_map = depth2xyzmap(depth, K)
+    tic_2 = time.time()
+    tic_3 = time.time()
     poses, vis = self.refiner.predict(mesh=self.mesh, mesh_tensors=self.mesh_tensors, rgb=rgb, depth=depth, K=K, ob_in_cams=poses.data.cpu().numpy(), normal_map=normal_map, xyz_map=xyz_map, glctx=self.glctx, mesh_diameter=self.diameter, iteration=iteration, get_vis=self.debug>=2)
     if vis is not None:
       imageio.imwrite(f'{self.debug_dir}/vis_refiner.png', vis)
-
+    tock_3 = time.time()
+    tic_3_5 = time.time()
     scores, vis = self.scorer.predict(mesh=self.mesh, rgb=rgb, depth=depth, K=K, ob_in_cams=poses.data.cpu().numpy(), normal_map=normal_map, mesh_tensors=self.mesh_tensors, glctx=self.glctx, mesh_diameter=self.diameter, get_vis=self.debug>=2)
     if vis is not None:
       imageio.imwrite(f'{self.debug_dir}/vis_score.png', vis)
-
+    tock_3_5 = time.time()
+    tic_4 = time.time()
     add_errs = self.compute_add_err_to_gt_pose(poses)
     logging.info(f"final, add_errs min:{add_errs.min()}")
 
@@ -236,7 +245,9 @@ class FoundationPose:
 
     self.poses = poses
     self.scores = scores
+    tock_4 = time.time()
 
+    print(f"tic_1:{tock_1-tic_1:.2f}s | tic_2:{tock_2-tic_2:.2f}s | tic_3:{tock_3-tic_3:.2f}s | tic_3_5:{tock_3_5-tic_3_5:.2f}s | tic_4:{tock_4-tic_4:.2f}s")
     return best_pose.data.cpu().numpy()
 
 

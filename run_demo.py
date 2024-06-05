@@ -38,19 +38,33 @@ if __name__=='__main__':
   scorer = ScorePredictor()
   refiner = PoseRefinePredictor()
   glctx = dr.RasterizeCudaContext()
+  tic = time.time()
   est = FoundationPose(model_pts=mesh.vertices, model_normals=mesh.vertex_normals, mesh=mesh, scorer=scorer, refiner=refiner, debug_dir=debug_dir, debug=debug, glctx=glctx)
+  tock = time.time()
+  logging.info(f"estimator initialization time: {tock-tic:.2f}s")
   logging.info("estimator initialization done")
 
   reader = YcbineoatReader(video_dir=args.test_scene_dir, shorter_side=None, zfar=np.inf)
 
+  print(f">>> enter loop: debug: {debug}")
   for i in range(len(reader.color_files)):
     logging.info(f'i:{i}')
     color = reader.get_color(i)
     depth = reader.get_depth(i)
     if i==0:
+      f1_tic = time.time()
+      print(">>> first frame start")
+      get_mask_tic = time.time()
       mask = reader.get_mask(0).astype(bool)
+      get_mask_tock = time.time()
+      register_tic = time.time()
       pose = est.register(K=reader.K, rgb=color, depth=depth, ob_mask=mask, iteration=args.est_refine_iter)
-
+      register_tock = time.time()
+      print(">>> first frame end")
+      f1_tock = time.time()
+      logging.info(f" get mask time: {get_mask_tock-get_mask_tic:.2f}s | "+
+                   f"register time: {register_tock-register_tic:.2f}s | <<< ML pipeline is here"+
+                   f"first frame time: {f1_tock-f1_tic:.2f}s")
       if debug>=3:
         m = mesh.copy()
         m.apply_transform(pose)
@@ -59,7 +73,11 @@ if __name__=='__main__':
         valid = depth>=0.1
         pcd = toOpen3dCloud(xyz_map[valid], color[valid])
         o3d.io.write_point_cloud(f'{debug_dir}/scene_complete.ply', pcd)
+
+      
+      input("Debug time to first frame")
     else:
+      print(">>> tracking")
       pose = est.track_one(rgb=color, depth=depth, K=reader.K, iteration=args.track_refine_iter)
 
     os.makedirs(f'{debug_dir}/ob_in_cam', exist_ok=True)
