@@ -136,8 +136,8 @@ To reduce initialization and runtime processing times dynamically without compro
 
 - **Inference Time**:
   - The time taken to process the first frame did not improve as anticipated:
-    - **ScoreNetMultiPair**: 2.37s
-    - **PoseRefinePredictor**: 2.42s
+    - **Post Quantization**: 2.37s
+    - **Without Quantization**: 2.42s
 
 ### Key Observations
 
